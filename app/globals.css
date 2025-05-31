@@ -27,24 +27,24 @@
   }
 
   .dark {
-    --background: 215 28% 17%;
-    --foreground: 213 31% 91%;
-    --card: 215 28% 17%;
-    --card-foreground: 213 31% 91%;
-    --popover: 215 28% 17%;
-    --popover-foreground: 213 31% 91%;
+    --background: 222 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
     --primary: 238 76% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 28% 25%;
-    --secondary-foreground: 213 31% 91%;
-    --muted: 215 28% 25%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 215 28% 25%;
-    --accent-foreground: 213 31% 91%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 213 31% 91%;
-    --border: 215 28% 25%;
-    --input: 215 28% 25%;
+    --secondary: 217 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 32.6% 17.5%;
+    --input: 217 32.6% 17.5%;
     --ring: 238 76% 58%;
   }
 }
@@ -63,6 +63,11 @@ body {
   font-family: "Inter", "Noto Sans Thai", sans-serif;
 }
 
+/* เพิ่ม smooth transition สำหรับการเปลี่ยน theme */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -79,4 +84,17 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* ปรับปรุง scrollbar สำหรับ dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }

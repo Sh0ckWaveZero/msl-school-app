@@ -15,6 +15,7 @@ import { Bell, User, LogOut, Settings, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 export function Navbar() {
   const router = useRouter()
@@ -88,6 +89,9 @@ export function Navbar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* User Menu */}
         <DropdownMenu>
