@@ -1,270 +1,210 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { usePathname, useRouter } from "next/navigation"
+import { ChevronDown, ChevronRight, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
-  GraduationCap,
-  LayoutDashboard,
-  Users,
-  BookOpen,
-  Calendar,
-  BarChart3,
-  Settings,
-  UserCheck,
-  MessageSquare,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-} from "lucide-react"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
+import { getMenuByRole, findActiveMenuItem, type MenuSection } from "@/lib/menu-config"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
 
 interface SidebarProps {
-  onNavigate?: () => void
+  className?: string
 }
 
-export function Sidebar({ onNavigate }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const { toast } = useToast()
   const router = useRouter()
+  const { toast } = useToast()
+  const [expandedSections, setExpandedSections] = useState<string[]>([])
+  const [userRole, setUserRole] = useState<string>("admin") // Default to admin for demo
+  const [menuSections, setMenuSections] = useState<MenuSection[]>([])
 
-  // Mock user role - in real app, get from auth context
-  const userRole = "admin" // admin, teacher, student, parent
+  // Get user role from pathname or localStorage
+  useEffect(() => {
+    const pathSegments = pathname.split("/")
+    const roleFromPath = pathSegments[2] // /dashboard/[role]/...
 
-  const handleLogout = () => {
-    // Clear any stored user data
-    localStorage.removeItem("msl-school-user")
+    if (roleFromPath && ["admin", "teacher", "student", "parent"].includes(roleFromPath)) {
+      setUserRole(roleFromPath)
+    } else {
+      // Fallback to localStorage or default
+      const savedRole = localStorage.getItem("user-role") || "admin"
+      setUserRole(savedRole)
+    }
+  }, [pathname])
 
-    toast({
-      title: "ออกจากระบบสำเร็จ! 👋",
-      description: "ขอบคุณที่ใช้บริการ MSL School Management System",
-      variant: "default",
-    })
+  // Update menu when role changes
+  useEffect(() => {
+    const sections = getMenuByRole(userRole)
+    setMenuSections(sections)
 
-    // Redirect to login page
-    setTimeout(() => {
-      router.push("/login")
-    }, 1000)
+    // Auto-expand section containing active item
+    const activeItem = findActiveMenuItem(sections, pathname)
+    if (activeItem) {
+      const sectionWithActiveItem = sections.find((section) => section.items.some((item) => item.id === activeItem.id))
+      if (sectionWithActiveItem) {
+        setExpandedSections((prev) => [...prev, sectionWithActiveItem.title])
+      }
+    }
+  }, [userRole, pathname])
+
+  const toggleSection = (sectionTitle: string) => {
+    setExpandedSections((prev) =>
+      prev.includes(sectionTitle) ? prev.filter((title) => title !== sectionTitle) : [...prev, sectionTitle],
+    )
   }
 
-  const getMenuItems = () => {
-    const baseItems = [
-      {
-        title: "แดชบอร์ด",
-        href: `/dashboard/${userRole}`,
-        icon: LayoutDashboard,
-      },
-    ]
+  const handleLogout = () => {
+    localStorage.removeItem("user-role")
+    localStorage.removeItem("msl-school-user")
+    toast({
+      title: "ออกจากระบบสำเร็จ",
+      description: "คุณได้ออกจากระบบเรียบร้อยแล้ว",
+    })
+    router.push("/login")
+  }
 
-    switch (userRole) {
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
       case "admin":
-        return [
-          ...baseItems,
-          {
-            title: "จัดการผู้ใช้",
-            href: "/dashboard/admin/users",
-            icon: Users,
-          },
-          {
-            title: "จัดการหลักสูตร",
-            href: "/dashboard/admin/courses",
-            icon: BookOpen,
-          },
-          {
-            title: "ตารางเรียน",
-            href: "/dashboard/admin/schedules",
-            icon: Calendar,
-          },
-          {
-            title: "รายงาน",
-            href: "/dashboard/admin/reports",
-            icon: BarChart3,
-          },
-          {
-            title: "การตั้งค่า",
-            href: "/dashboard/admin/settings",
-            icon: Settings,
-          },
-        ]
-
+        return "ผู้ดูแลระบบ"
       case "teacher":
-        return [
-          ...baseItems,
-          {
-            title: "ชั้นเรียนของฉัน",
-            href: "/dashboard/teacher/classes",
-            icon: BookOpen,
-          },
-          {
-            title: "นักเรียน",
-            href: "/dashboard/teacher/students",
-            icon: Users,
-          },
-          {
-            title: "การเข้าเรียน",
-            href: "/dashboard/teacher/attendance",
-            icon: UserCheck,
-          },
-          {
-            title: "เกรด",
-            href: "/dashboard/teacher/grades",
-            icon: FileText,
-          },
-          {
-            title: "ข้อความ",
-            href: "/dashboard/teacher/messages",
-            icon: MessageSquare,
-          },
-        ]
-
+        return "ครู"
       case "student":
-        return [
-          ...baseItems,
-          {
-            title: "วิชาเรียน",
-            href: "/dashboard/student/courses",
-            icon: BookOpen,
-          },
-          {
-            title: "ตารางเรียน",
-            href: "/dashboard/student/schedule",
-            icon: Calendar,
-          },
-          {
-            title: "เกรด",
-            href: "/dashboard/student/grades",
-            icon: FileText,
-          },
-          {
-            title: "การเข้าเรียน",
-            href: "/dashboard/student/attendance",
-            icon: UserCheck,
-          },
-          {
-            title: "ข้อความ",
-            href: "/dashboard/student/messages",
-            icon: MessageSquare,
-          },
-        ]
-
+        return "นักเรียน"
       case "parent":
-        return [
-          ...baseItems,
-          {
-            title: "ผลการเรียนลูก",
-            href: "/dashboard/parent/student-progress",
-            icon: BarChart3,
-          },
-          {
-            title: "การเข้าเรียน",
-            href: "/dashboard/parent/attendance",
-            icon: UserCheck,
-          },
-          {
-            title: "ข้อความจากโรงเรียน",
-            href: "/dashboard/parent/messages",
-            icon: MessageSquare,
-          },
-          {
-            title: "ตารางเรียน",
-            href: "/dashboard/parent/schedule",
-            icon: Calendar,
-          },
-        ]
-
+        return "ผู้ปกครอง"
       default:
-        return baseItems
+        return "ผู้ใช้"
     }
   }
 
-  const menuItems = getMenuItems()
+  const getUserName = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "ผู้ดูแลระบบ"
+      case "teacher":
+        return "อาจารย์สมหญิง"
+      case "student":
+        return "สมชาย ใจดี"
+      case "parent":
+        return "คุณสมศรี"
+      default:
+        return "ผู้ใช้"
+    }
+  }
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col bg-white border-r border-gray-200 shadow-sm transition-all duration-300 ease-in-out relative",
-        collapsed ? "w-[70px]" : "w-64",
-      )}
-    >
-      {/* Toggle Button */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1 shadow-md z-50 hover:bg-gray-50"
-      >
-        {collapsed ? (
-          <ChevronRight className="h-4 w-4 text-gray-600" />
-        ) : (
-          <ChevronLeft className="h-4 w-4 text-gray-600" />
-        )}
-      </button>
-
-      {/* Logo */}
-      <div
-        className={cn(
-          "flex h-16 items-center border-b border-gray-200 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300",
-          collapsed ? "justify-center px-2" : "px-6",
-        )}
-      >
-        <Link href="/" className="flex items-center gap-2">
-          <GraduationCap className="h-8 w-8 text-white" />
-          {!collapsed && <span className="text-xl font-bold text-white">MSL School</span>}
-        </Link>
+    <div className={cn("flex h-full w-64 flex-col bg-background border-r border-border", className)}>
+      {/* Header */}
+      <div className="flex h-16 items-center border-b border-border px-6">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">MSL</span>
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-foreground">MSL School</h1>
+            <p className="text-xs text-muted-foreground">{getRoleDisplayName(userRole)}</p>
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-6">
-        <nav className="space-y-2">
-          {menuItems.map((item) => (
-            <Link key={item.href} href={item.href} onClick={onNavigate}>
-              <Button
-                variant={pathname === item.href ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start h-11 transition-all duration-200",
-                  pathname === item.href
-                    ? "bg-blue-50 text-blue-700 hover:bg-blue-100 shadow-sm"
-                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-                  collapsed ? "px-2" : "px-4",
+      <ScrollArea className="flex-1 px-3 py-4">
+        <div className="space-y-4">
+          {menuSections.map((section) => {
+            const isExpanded = expandedSections.includes(section.title)
+
+            return (
+              <div key={section.title} className="space-y-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  onClick={() => toggleSection(section.title)}
+                >
+                  <span>{section.title}</span>
+                  {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                </Button>
+
+                {isExpanded && (
+                  <div className="space-y-1 ml-2">
+                    {section.items.map((item) => {
+                      const isActive = pathname === item.href
+                      const Icon = item.icon
+
+                      return (
+                        <Link key={item.id} href={item.href}>
+                          <Button
+                            variant={isActive ? "secondary" : "ghost"}
+                            className={cn(
+                              "w-full justify-start h-9 px-3 text-sm font-normal",
+                              isActive && "bg-secondary text-secondary-foreground font-medium",
+                            )}
+                          >
+                            <Icon className="mr-3 h-4 w-4" />
+                            <span className="flex-1 text-left">{item.title}</span>
+                            {item.badge && (
+                              <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-xs">
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </Button>
+                        </Link>
+                      )
+                    })}
+                  </div>
                 )}
-              >
-                <item.icon className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-3")} />
-                {!collapsed && <span>{item.title}</span>}
-              </Button>
-            </Link>
-          ))}
-        </nav>
+              </div>
+            )
+          })}
+        </div>
       </ScrollArea>
 
-      {/* User Info */}
-      <div
-        className={cn("border-t border-gray-200 p-4 bg-gray-50 transition-all duration-300", collapsed ? "p-2" : "p-4")}
-      >
-        <div className={cn("flex items-center gap-3", collapsed ? "flex-col" : "flex-row")}>
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-blue-600 text-white font-semibold">A</AvatarFallback>
-          </Avatar>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">Admin User</p>
-              <p className="text-xs text-gray-600">ผู้ดูแลระบบ</p>
-            </div>
-          )}
-        </div>
+      <Separator />
 
-        {/* Logout Button */}
-        <Button
-          variant="ghost"
-          className={cn("mt-2 text-red-600 hover:text-red-700 hover:bg-red-50 w-full", collapsed ? "px-2" : "")}
-          onClick={handleLogout}
-        >
-          <LogOut className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-2")} />
-          {!collapsed && <span>ออกจากระบบ</span>}
-        </Button>
+      {/* User Profile */}
+      <div className="p-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start h-auto p-2">
+              <div className="flex items-center gap-3 w-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                    {getUserName(userRole).charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground">{getUserName(userRole)}</p>
+                  <p className="text-xs text-muted-foreground">{getRoleDisplayName(userRole)}</p>
+                </div>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" side="top">
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>โปรไฟล์</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>ออกจากระบบ</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )

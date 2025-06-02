@@ -1,126 +1,72 @@
 "use client"
 
+import { useState } from "react"
+import { Search, Menu, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Bell, User, LogOut, Settings, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export function Navbar() {
-  const router = useRouter()
-  const { toast } = useToast()
+interface NavbarProps {
+  onMenuClick?: () => void
+}
 
-  const handleLogout = () => {
-    // Clear any stored user data
-    localStorage.removeItem("msl-school-user")
-
-    toast({
-      title: "ออกจากระบบสำเร็จ! 👋",
-      description: "ขอบคุณที่ใช้บริการ MSL School Management System",
-      variant: "default",
-    })
-
-    // Redirect to login page
-    setTimeout(() => {
-      router.push("/login")
-    }, 1000)
-  }
+export function Navbar({ onMenuClick }: NavbarProps) {
+  const [searchQuery, setSearchQuery] = useState("")
 
   return (
-    <header className="h-16 border-b border-gray-200 bg-white/95 backdrop-blur-sm flex items-center justify-between px-6 shadow-sm">
-      <div className="flex items-center gap-4 flex-1">
-        <h2 className="text-lg font-semibold text-gray-900 hidden md:block">ระบบจัดการโรงเรียน MSL School</h2>
+    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6">
+      {/* Mobile menu button */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
+          <Menu className="h-5 w-5" />
+        </Button>
 
-        {/* Search Bar */}
-        <div className="relative max-w-md ml-auto mr-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input placeholder="ค้นหา..." className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors" />
+        {/* Search */}
+        <div className="relative hidden md:block">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            type="search"
+            placeholder="ค้นหา..."
+            className="w-[300px] pl-10 bg-background border-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      {/* Right side */}
+      <div className="flex items-center gap-4">
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative hover:bg-gray-100">
-              <Bell className="h-5 w-5 text-gray-600" />
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500 text-white">
                 3
               </Badge>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel className="font-semibold">การแจ้งเตือน</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="p-4">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-gray-900">นักเรียนใหม่ลงทะเบียน</p>
-                <p className="text-xs text-gray-500">สมชาย ใจดี ลงทะเบียนเรียนใหม่</p>
-                <p className="text-xs text-blue-600">5 นาทีที่แล้ว</p>
+          <DropdownMenuContent className="w-80" align="end">
+            <div className="p-4">
+              <h4 className="font-medium text-foreground mb-2">การแจ้งเตือน</h4>
+              <div className="space-y-2">
+                <div className="p-2 rounded-lg bg-muted">
+                  <p className="text-sm font-medium">เกรดใหม่</p>
+                  <p className="text-xs text-muted-foreground">คุณได้รับเกรดใหม่สำหรับวิชาคณิตศาสตร์</p>
+                </div>
+                <div className="p-2 rounded-lg bg-muted">
+                  <p className="text-sm font-medium">ประกาศใหม่</p>
+                  <p className="text-xs text-muted-foreground">มีประกาศใหม่จากโรงเรียน</p>
+                </div>
               </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="p-4">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-gray-900">ครูอัพเดทเกรด</p>
-                <p className="text-xs text-gray-500">อาจารย์สมหญิง อัพเดทเกรดวิชาคณิตศาสตร์</p>
-                <p className="text-xs text-blue-600">15 นาทีที่แล้ว</p>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="p-4">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-gray-900">การสำรองข้อมูลเสร็จสิ้น</p>
-                <p className="text-xs text-gray-500">การสำรองข้อมูลรายวันเสร็จสิ้นแล้ว</p>
-                <p className="text-xs text-blue-600">1 ชั่วโมงที่แล้ว</p>
-              </div>
-            </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
         {/* Theme Toggle */}
         <ThemeToggle />
-
-        {/* User Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 hover:bg-gray-100 px-3">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">A</AvatarFallback>
-              </Avatar>
-              <span className="hidden md:inline-block text-sm font-medium text-gray-700">Admin User</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="font-semibold">บัญชีของฉัน</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
-              <User className="mr-2 h-4 w-4" />
-              โปรไฟล์
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
-              การตั้งค่า
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              ออกจากระบบ
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   )

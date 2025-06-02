@@ -1,11 +1,7 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Navbar } from "@/components/layout/navbar"
 
@@ -15,40 +11,43 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  // Prevent hydration mismatch
   useEffect(() => {
-    setIsMounted(true)
+    setMounted(true)
   }, [])
 
-  if (!isMounted) {
-    return null
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-64">
-          <Sidebar onNavigate={() => setSidebarOpen(false)} />
-        </SheetContent>
-      </Sheet>
+    <div className="min-h-screen bg-background">
+      <div className="flex h-screen overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar />
+        </div>
 
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block h-screen sticky top-0">
-        <Sidebar />
-      </div>
+        {/* Mobile Sidebar */}
+        {sidebarOpen && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+            <div className="fixed inset-y-0 left-0 z-50 lg:hidden">
+              <Sidebar />
+            </div>
+          </>
+        )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-1 p-6">{children}</main>
+        {/* Main content */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+          <main className="flex-1 overflow-auto">{children}</main>
+        </div>
       </div>
     </div>
   )
