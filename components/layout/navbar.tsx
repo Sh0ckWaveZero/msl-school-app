@@ -1,5 +1,7 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+
 import { useState } from "react"
 import { Search, Bell, MessageSquare, Calendar, Settings, User, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,9 +21,10 @@ import { Separator } from "@/components/ui/separator"
 
 interface NavbarProps {
   onMenuClick?: () => void
+  isMobile?: boolean
 }
 
-export function Navbar({ onMenuClick }: NavbarProps) {
+export function Navbar({ onMenuClick, isMobile = false }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
   const notifications = [
@@ -38,13 +41,6 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       message: "มีประกาศใหม่จากโรงเรียน เรื่องการปิดเทอม",
       time: "1 ชั่วโมงที่แล้ว",
       unread: true,
-    },
-    {
-      id: 3,
-      title: "งานที่มอบหมาย",
-      message: "มีงานใหม่ที่ต้องส่งภายใน 3 วัน",
-      time: "2 ชั่วโมงที่แล้ว",
-      unread: false,
     },
   ]
 
@@ -69,32 +65,51 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const unreadMessages = messages.filter((m) => m.unread).length
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 shadow-sm">
-      {/* Left side - Mobile menu button and Search */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 sm:px-6 shadow-sm">
+      {/* Left side */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Mobile menu button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onMenuClick}
+          className={cn(
+            "h-10 w-10", // Larger touch target on mobile
+            !isMobile && "lg:hidden",
+          )}
+        >
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Search */}
-        <div className="relative hidden md:block">
+        {/* Search - Hidden on small mobile, visible on larger screens */}
+        <div className="relative hidden sm:block">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="search"
             placeholder="ค้นหา..."
-            className="w-[300px] pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={cn(
+              "pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+              isMobile ? "w-[200px]" : "w-[300px]",
+            )}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {/* Right side - Actions */}
-      <div className="flex items-center gap-2">
+      {/* Right side */}
+      <div className="flex items-center gap-1 sm:gap-2">
+        {/* Mobile search button */}
+        {isMobile && (
+          <Button variant="ghost" size="icon" className="h-10 w-10 sm:hidden">
+            <Search className="h-5 w-5" />
+          </Button>
+        )}
+
         {/* Messages */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 hover:bg-gray-100 dark:hover:bg-gray-800">
               <MessageSquare className="h-5 w-5" />
               {unreadMessages > 0 && (
                 <Badge
@@ -134,7 +149,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 hover:bg-gray-100 dark:hover:bg-gray-800">
               <Bell className="h-5 w-5" />
               {unreadNotifications > 0 && (
                 <Badge
@@ -171,25 +186,36 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Calendar */}
-        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+        {/* Calendar - Hidden on small mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 hover:bg-gray-100 dark:hover:bg-gray-800 hidden sm:flex"
+        >
           <Calendar className="h-5 w-5" />
         </Button>
 
-        {/* Theme Toggle - แบบเดิม */}
+        {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* Settings */}
-        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+        {/* Settings - Hidden on small mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 hover:bg-gray-100 dark:hover:bg-gray-800 hidden sm:flex"
+        >
           <Settings className="h-5 w-5" />
         </Button>
 
-        <Separator orientation="vertical" className="h-6 mx-2" />
+        {!isMobile && <Separator orientation="vertical" className="h-6 mx-2" />}
 
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+            <Button
+              variant="ghost"
+              className="relative h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">ผ</AvatarFallback>
               </Avatar>
