@@ -1,145 +1,44 @@
 "use client"
 
 import type React from "react"
-
-import { createContext, useContext, useEffect, useState } from "react"
-
-interface User {
-  id: string
-  username: string
-  email: string
-  role: "admin" | "teacher" | "student" | "parent"
-  profile: {
-    firstName: string
-    lastName: string
-    avatar?: string
-    studentId?: string
-    teacherId?: string
-    parentId?: string
-    class?: string
-    grade?: string
-    subjects?: string[]
-    children?: string[]
-  }
-}
+import { createContext, useContext, useEffect } from "react"
+import { useAuthStore } from "@/lib/stores/auth-store"
 
 interface AuthContextType {
-  user: User | null
-  login: (username: string, password: string, role: string) => Promise<void>
-  logout: () => void
-  isLoading: boolean
+  // Re-export store methods for backward compatibility
+  user: ReturnType<typeof useAuthStore>["user"]
+  login: ReturnType<typeof useAuthStore>["login"]
+  logout: ReturnType<typeof useAuthStore>["logout"]
+  isLoading: ReturnType<typeof useAuthStore>["isLoading"]
+  isAuthenticated: ReturnType<typeof useAuthStore>["isAuthenticated"]
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Mock users for different roles
-const mockUsers: Record<string, User> = {
-  admin: {
-    id: "admin001",
-    username: "admin",
-    email: "admin@msl-school.com",
-    role: "admin",
-    profile: {
-      firstName: "ผู้ดูแล",
-      lastName: "ระบบ",
-      avatar: "ผ",
-    },
-  },
-  teacher: {
-    id: "teacher001",
-    username: "teacher",
-    email: "teacher@msl-school.com",
-    role: "teacher",
-    profile: {
-      firstName: "สมหญิง",
-      lastName: "ใจดี",
-      avatar: "ส",
-      teacherId: "T001",
-      subjects: ["คณิตศาสตร์พื้นฐาน", "สถิติและความน่าจะเป็น", "แคลคูลัส"],
-    },
-  },
-  student: {
-    id: "student001",
-    username: "student",
-    email: "student@msl-school.com",
-    role: "student",
-    profile: {
-      firstName: "สมชาย",
-      lastName: "ใจดี",
-      avatar: "ส",
-      studentId: "STD001",
-      class: "ปวช.2/1",
-      grade: "ปวช.2",
-    },
-  },
-  parent: {
-    id: "parent001",
-    username: "parent",
-    email: "parent@msl-school.com",
-    role: "parent",
-    profile: {
-      firstName: "สมศรี",
-      lastName: "ใจดี",
-      avatar: "ส",
-      parentId: "P001",
-      children: ["สมชาย ใจดี", "สมหญิง ใจดี"],
-    },
-  },
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const authStore = useAuthStore()
 
   useEffect(() => {
-    // Check for existing session
-    const checkAuth = async () => {
-      try {
-        // TODO: Check for valid session/token
-        const savedUser = localStorage.getItem("msl-school-user")
-        if (savedUser) {
-          setUser(JSON.parse(savedUser))
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error)
-      } finally {
-        setIsLoading(false)
+    // Initialize auth state on mount
+    const initAuth = async () => {
+      // Check if user is already logged in from persisted state
+      if (authStore.user && !authStore.isAuthenticated) {
+        authStore.setUser(authStore.user)
       }
     }
 
-    checkAuth()
-  }, [])
+    initAuth()
+  }, [authStore])
 
-  const login = async (username: string, password: string, role: string) => {
-    setIsLoading(true)
-    try {
-      // Mock authentication - in real app, this would be an API call
-      const mockUser = mockUsers[role.toLowerCase()]
-
-      if (!mockUser) {
-        throw new Error("ไม่พบผู้ใช้สำหรับบทบาทนี้")
-      }
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      setUser(mockUser)
-      localStorage.setItem("msl-school-user", JSON.stringify(mockUser))
-      localStorage.setItem("user-role", role.toLowerCase())
-    } catch (error) {
-      throw new Error("การเข้าสู่ระบบล้มเหลว")
-    } finally {
-      setIsLoading(false)
-    }
+  const contextValue: AuthContextType = {
+    user: authStore.user,
+    login: authStore.login,
+    logout: authStore.logout,
+    isLoading: authStore.isLoading,
+    isAuthenticated: authStore.isAuthenticated,
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem("msl-school-user")
-    localStorage.removeItem("user-role")
-  }
-
-  return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
@@ -149,3 +48,6 @@ export function useAuth() {
   }
   return context
 }
+
+// Direct hook to Zustand store (recommended for new code)
+export { useAuthStore }
