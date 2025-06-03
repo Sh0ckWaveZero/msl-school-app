@@ -20,21 +20,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils"
 import { getMenuByRole, findActiveMenuItem, type MenuSection } from "@/lib/menu-config"
 import { useToast } from "@/hooks/use-toast"
+import { useUIStore } from "@/lib/stores/ui-store"
 
 interface SidebarProps {
-  isOpen: boolean
-  onToggle: () => void
-  isMobile?: boolean
   className?: string
 }
 
-export function Sidebar({ isOpen, onToggle, isMobile = false, className }: SidebarProps) {
+export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
   const [expandedSections, setExpandedSections] = useState<string[]>([])
   const [userRole, setUserRole] = useState<string>("admin")
   const [menuSections, setMenuSections] = useState<MenuSection[]>([])
+
+  const { sidebarOpen, isMobile, setSidebarOpen, toggleSidebar } = useUIStore()
 
   // Get user role from pathname or localStorage
   useEffect(() => {
@@ -115,16 +115,30 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
     return badge > 99 ? "99+" : badge.toString()
   }
 
+  const handleNavigation = () => {
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
+  }
+
   // Mobile: Full overlay sidebar
   if (isMobile) {
     return (
       <TooltipProvider>
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         <div
           id="mobile-sidebar"
           className={cn(
-            "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-xl flex flex-col transition-transform duration-300 ease-in-out",
+            "fixed left-0 top-0 z-50 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-xl flex flex-col transition-transform duration-300 ease-in-out lg:hidden",
             "w-80", // Wider on mobile for better touch targets
-            isOpen ? "translate-x-0" : "-translate-x-full",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
             className,
           )}
         >
@@ -143,8 +157,9 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onToggle}
+                onClick={() => setSidebarOpen(false)}
                 className="h-10 w-10 hover:bg-gray-100 dark:hover:bg-gray-800"
+                aria-label="ปิดเมนู"
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -164,19 +179,21 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
                         variant="ghost"
                         className="w-full justify-between h-10 px-3 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
                         onClick={() => toggleSection(section.title)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`section-${section.title}`}
                       >
                         <span>{section.title}</span>
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </Button>
 
                       {isExpanded && (
-                        <div className="space-y-2 mt-2 ml-2">
+                        <div id={`section-${section.title}`} className="space-y-2 mt-2 ml-2">
                           {section.items.map((item) => {
                             const isActive = pathname === item.href
                             const Icon = item.icon
 
                             return (
-                              <Link key={item.id} href={item.href} onClick={() => onToggle()}>
+                              <Link key={item.id} href={item.href} onClick={handleNavigation}>
                                 <Button
                                   variant={isActive ? "default" : "ghost"}
                                   className={cn(
@@ -256,19 +273,19 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
     )
   }
 
-  // Desktop: Original sidebar behavior
+  // Desktop: Sidebar with expanded default
   return (
     <TooltipProvider>
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 shadow-lg flex flex-col",
-          isOpen ? "w-64" : "w-16",
+          sidebarOpen ? "w-64" : "w-16",
           className,
         )}
       >
         {/* Desktop Header */}
         <div className="flex h-16 items-center border-b border-gray-200 dark:border-gray-700 px-4">
-          {isOpen ? (
+          {sidebarOpen ? (
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
@@ -282,8 +299,9 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onToggle}
+                onClick={toggleSidebar}
                 className="h-8 w-8 hover:bg-gray-100 dark:hover:bg-gray-800"
+                aria-label="ย่อเมนู"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -296,8 +314,9 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onToggle}
+                onClick={toggleSidebar}
                 className="h-6 w-6 hover:bg-gray-100 dark:hover:bg-gray-800"
+                aria-label="ขยายเมนู"
               >
                 <Menu className="h-3 w-3" />
               </Button>
@@ -308,29 +327,34 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
         {/* Desktop Navigation */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className={cn("py-4", isOpen ? "px-3" : "px-2")}>
+            <div className={cn("py-4", sidebarOpen ? "px-3" : "px-2")}>
               {menuSections.map((section) => {
                 const isExpanded = expandedSections.includes(section.title)
 
                 return (
                   <div key={section.title} className="mb-4">
-                    {isOpen && (
+                    {sidebarOpen && (
                       <Button
                         variant="ghost"
                         className="w-full justify-between h-8 px-3 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
                         onClick={() => toggleSection(section.title)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`desktop-section-${section.title}`}
                       >
                         <span>{section.title}</span>
                         {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                       </Button>
                     )}
 
-                    <div className={cn("space-y-1 mt-1", isOpen && isExpanded ? "ml-2" : "")}>
-                      {(isOpen ? (isExpanded ? section.items : []) : section.items).map((item) => {
+                    <div
+                      id={`desktop-section-${section.title}`}
+                      className={cn("space-y-1 mt-1", sidebarOpen && isExpanded ? "ml-2" : "")}
+                    >
+                      {(sidebarOpen ? (isExpanded ? section.items : []) : section.items).map((item) => {
                         const isActive = pathname === item.href
                         const Icon = item.icon
 
-                        if (!isOpen) {
+                        if (!sidebarOpen) {
                           return (
                             <Tooltip key={item.id} delayDuration={300}>
                               <TooltipTrigger asChild>
@@ -398,7 +422,7 @@ export function Sidebar({ isOpen, onToggle, isMobile = false, className }: Sideb
         <div className="border-t border-gray-200 dark:border-gray-700 p-3 mt-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              {isOpen ? (
+              {sidebarOpen ? (
                 <Button variant="ghost" className="w-full justify-start h-auto p-2">
                   <div className="flex items-center gap-3 w-full">
                     <Avatar className="h-8 w-8">

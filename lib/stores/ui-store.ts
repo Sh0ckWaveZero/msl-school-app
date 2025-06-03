@@ -1,116 +1,137 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
+export interface Notification {
+  id: string
+  type: "success" | "error" | "warning" | "info"
+  title: string
+  message?: string
+  duration?: number
+  action?: {
+    label: string
+    onClick: () => void
+  }
+}
+
 interface UIState {
   // Sidebar state
   sidebarOpen: boolean
   sidebarCollapsed: boolean
+
+  // Mobile state
   isMobile: boolean
 
-  // Theme and preferences
-  theme: "light" | "dark" | "system"
-
-  // Mobile-specific states
-  mobileMenuOpen: boolean
-  searchOpen: boolean
+  // Notifications
+  notifications: Notification[]
 
   // Loading states
   globalLoading: boolean
 
-  // Notification states
-  notifications: Array<{
-    id: string
-    title: string
-    message: string
-    type: "success" | "error" | "warning" | "info"
-    timestamp: Date
-    read: boolean
-  }>
+  // Network state
+  isOnline: boolean
+
+  // Theme
+  theme: "light" | "dark" | "system"
 
   // Actions
   setSidebarOpen: (open: boolean) => void
   setSidebarCollapsed: (collapsed: boolean) => void
-  setIsMobile: (isMobile: boolean) => void
-  setTheme: (theme: "light" | "dark" | "system") => void
-  setMobileMenuOpen: (open: boolean) => void
-  setSearchOpen: (open: boolean) => void
-  setGlobalLoading: (loading: boolean) => void
-  addNotification: (notification: Omit<UIState["notifications"][0], "id" | "timestamp" | "read">) => void
-  markNotificationRead: (id: string) => void
-  clearNotifications: () => void
   toggleSidebar: () => void
+  setIsMobile: (isMobile: boolean) => void
+  addNotification: (notification: Omit<Notification, "id">) => void
+  removeNotification: (id: string) => void
+  clearNotifications: () => void
+  setGlobalLoading: (loading: boolean) => void
+  setIsOnline: (online: boolean) => void
+  setTheme: (theme: "light" | "dark" | "system") => void
+  initializeSidebar: () => void
 }
 
 export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
-      // Initial state
-      sidebarOpen: true,
+      sidebarOpen: true, // Default to open for desktop
       sidebarCollapsed: false,
       isMobile: false,
-      theme: "light",
-      mobileMenuOpen: false,
-      searchOpen: false,
-      globalLoading: false,
       notifications: [],
+      globalLoading: false,
+      isOnline: true,
+      theme: "system",
 
-      // Actions
-      setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+      setSidebarOpen: (open: boolean) => {
+        set({ sidebarOpen: open })
+      },
 
-      setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
+      setSidebarCollapsed: (collapsed: boolean) => {
+        set({ sidebarCollapsed: collapsed })
+      },
 
-      setIsMobile: (isMobile) => {
+      toggleSidebar: () => {
+        set((state) => ({ sidebarOpen: !state.sidebarOpen }))
+      },
+
+      setIsMobile: (isMobile: boolean) => {
         const { sidebarOpen } = get()
         set({
           isMobile,
-          // Auto-close sidebar on mobile
-          sidebarOpen: isMobile ? false : sidebarOpen,
+          // Auto close sidebar on mobile, keep open on desktop
+          sidebarOpen: isMobile ? false : true,
         })
       },
 
-      setTheme: (theme) => set({ theme }),
+      initializeSidebar: () => {
+        const { isMobile } = get()
+        set({
+          sidebarOpen: !isMobile, // Open by default on desktop, closed on mobile
+        })
+      },
 
-      setMobileMenuOpen: (mobileMenuOpen) => set({ mobileMenuOpen }),
+      addNotification: (notification: Omit<Notification, "id">) => {
+        const id = Math.random().toString(36).substr(2, 9)
+        const newNotification = { ...notification, id }
 
-      setSearchOpen: (searchOpen) => set({ searchOpen }),
-
-      setGlobalLoading: (globalLoading) => set({ globalLoading }),
-
-      addNotification: (notification) => {
-        const newNotification = {
-          ...notification,
-          id: Date.now().toString(),
-          timestamp: new Date(),
-          read: false,
-        }
         set((state) => ({
-          notifications: [newNotification, ...state.notifications].slice(0, 50), // Keep only last 50
+          notifications: [newNotification, ...state.notifications],
+        }))
+
+        // Auto remove after duration
+        const duration = notification.duration || 5000
+        setTimeout(() => {
+          set((state) => ({
+            notifications: state.notifications.filter((n) => n.id !== id),
+          }))
+        }, duration)
+      },
+
+      removeNotification: (id: string) => {
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
         }))
       },
 
-      markNotificationRead: (id) => {
-        set((state) => ({
-          notifications: state.notifications.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)),
-        }))
+      clearNotifications: () => {
+        set({ notifications: [] })
       },
 
-      clearNotifications: () => set({ notifications: [] }),
+      setGlobalLoading: (loading: boolean) => {
+        set({ globalLoading: loading })
+      },
 
-      toggleSidebar: () => {
-        const { sidebarOpen, isMobile } = get()
-        if (isMobile) {
-          set({ mobileMenuOpen: !get().mobileMenuOpen })
-        } else {
-          set({ sidebarOpen: !sidebarOpen })
-        }
+      setIsOnline: (online: boolean) => {
+        set({ isOnline: online })
+      },
+
+      setTheme: (theme: "light" | "dark" | "system") => {
+        set({ theme })
       },
     }),
     {
       name: "msl-ui-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        theme: state.theme,
         sidebarCollapsed: state.sidebarCollapsed,
+        theme: state.theme,
+        // Don't persist sidebarOpen as it should be determined by screen size
       }),
     },
   ),

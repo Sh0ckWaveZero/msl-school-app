@@ -1,138 +1,212 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { GraduationCap, Users, BookOpen, BarChart3 } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { GraduationCap, Users, BookOpen, Calendar, BarChart3, ArrowRight, Sparkles } from "lucide-react"
 
-export default function LandingPage() {
+export default function HomePage() {
+  const features = [
+    {
+      icon: Users,
+      title: "จัดการนักเรียน",
+      description: "ระบบจัดการข้อมูลนักเรียนที่ครอบคลุมและใช้งานง่าย",
+      color: "bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400",
+    },
+    {
+      icon: BookOpen,
+      title: "จัดการหลักสูตร",
+      description: "จัดการหลักสูตรและรายวิชาอย่างมีประสิทธิภาพ",
+      color: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400",
+    },
+    {
+      icon: Calendar,
+      title: "ตารางเรียน",
+      description: "จัดตารางเรียนและติดตามเวลาเรียนอย่างเป็นระบบ",
+      color: "bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400",
+    },
+    {
+      icon: BarChart3,
+      title: "รายงานสถิติ",
+      description: "วิเคราะห์ข้อมูลและสร้างรายงานต่างๆ อย่างละเอียด",
+      color: "bg-orange-50 text-orange-600 dark:bg-orange-950 dark:text-orange-400",
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
       {/* Header */}
-      <header className="border-b bg-white/95 backdrop-blur-sm shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">MSL School</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" asChild className="border-gray-300 text-gray-700 hover:bg-gray-50">
-              <Link href="/login">เข้าสู่ระบบ</Link>
-            </Button>
-            <Button asChild className="bg-blue-600 hover:bg-blue-700">
-              <Link href="/register">สมัครสมาชิก</Link>
-            </Button>
+      <header className="border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50 transition-colors duration-300">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 rounded-xl flex items-center justify-center transition-colors duration-300">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  MSL School
+                </h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                  Management System
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
+              <Link href="/login">
+                <Button className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 text-white rounded-full px-6 transition-all duration-300">
+                  เข้าสู่ระบบ
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="container mx-auto px-4 py-16 text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">ระบบจัดการโรงเรียนอาชีวศึกษา</h2>
-          <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
-            ระบบจัดการที่ครอบคลุมสำหรับโรงเรียนอาชีวศึกษา รองรับการทำงานของผู้ดูแลระบบ ครู นักเรียน และผู้ปกครอง
+      {/* Hero Section */}
+      <section className="py-24 px-6">
+        <div className="container mx-auto text-center max-w-4xl">
+          <div className="inline-flex items-center space-x-2 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full text-sm font-medium mb-8 transition-colors duration-300">
+            <Sparkles className="w-4 h-4" />
+            <span>ระบบจัดการโรงเรียนยุคใหม่</span>
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight transition-colors duration-300">
+            จัดการโรงเรียน
+            <br />
+            <span className="text-blue-500 dark:text-blue-400 transition-colors duration-300">ง่ายขึ้น</span>
+          </h2>
+
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-12 leading-relaxed max-w-2xl mx-auto transition-colors duration-300">
+            ระบบจัดการโรงเรียนที่ออกแบบมาให้ใช้งานง่าย ครบครัน และทันสมัย พร้อมรองรับการใช้งานบนทุกอุปกรณ์
           </p>
-          <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3">
-            <Link href="/login">เริ่มต้นใช้งาน</Link>
-          </Button>
-        </section>
 
-        {/* Features */}
-        <section className="container mx-auto px-4 py-16">
-          <h3 className="text-3xl font-bold text-center mb-12 text-gray-900">ฟีเจอร์หลัก</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300 bg-white">
-              <CardHeader>
-                <Users className="h-12 w-12 text-blue-600 mb-4" />
-                <CardTitle className="text-gray-900">จัดการผู้ใช้</CardTitle>
-                <CardDescription className="text-gray-700">
-                  ระบบจัดการผู้ใช้แบบ Multi-role สำหรับ Admin, Teacher, Student และ Parent
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300 bg-white">
-              <CardHeader>
-                <BookOpen className="h-12 w-12 text-green-600 mb-4" />
-                <CardTitle className="text-gray-900">จัดการหลักสูตร</CardTitle>
-                <CardDescription className="text-gray-700">
-                  ระบบจัดการหลักสูตร วิชาเรียน และตารางเรียนแบบครอบคลุม
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300 bg-white">
-              <CardHeader>
-                <GraduationCap className="h-12 w-12 text-purple-600 mb-4" />
-                <CardTitle className="text-gray-900">ติดตามผลการเรียน</CardTitle>
-                <CardDescription className="text-gray-700">
-                  ระบบติดตามผลการเรียน การเข้าเรียน และพฤติกรรมของนักเรียน
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-gray-200 hover:shadow-lg transition-shadow duration-300 bg-white">
-              <CardHeader>
-                <BarChart3 className="h-12 w-12 text-orange-600 mb-4" />
-                <CardTitle className="text-gray-900">รายงานและสถิติ</CardTitle>
-                <CardDescription className="text-gray-700">ระบบรายงานและสถิติที่ครอบคลุมสำหรับการตัดสินใจ</CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href="/login">
+              <Button
+                size="lg"
+                className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 text-white rounded-full px-8 py-4 text-lg font-medium group transition-all duration-300"
+              >
+                เริ่มใช้งานเลย
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </Button>
+            </Link>
+            <Badge
+              variant="secondary"
+              className="text-sm px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors duration-300"
+            >
+              รองรับ Mobile & Desktop
+            </Badge>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      {/* Footer - Now sticky at bottom */}
-      <footer className="bg-gray-900 text-gray-100 py-8 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <GraduationCap className="h-6 w-6 text-blue-400" />
-                <span className="text-lg font-semibold text-white">MSL School</span>
-              </div>
-              <p className="text-gray-300">ระบบจัดการโรงเรียนอาชีวศึกษาที่ทันสมัยและครอบคลุม</p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4 text-white">ลิงก์ด่วน</h4>
-              <ul className="space-y-2 text-gray-300">
-                <li>
-                  <Link href="/about" className="hover:text-blue-400 transition-colors">
-                    เกี่ยวกับเรา
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-blue-400 transition-colors">
-                    ติดต่อเรา
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/help" className="hover:text-blue-400 transition-colors">
-                    ช่วยเหลือ
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className="hover:text-blue-400 transition-colors">
-                    นโยบายความเป็นส่วนตัว
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4 text-white">ติดต่อเรา</h4>
-              <div className="space-y-2 text-gray-300">
-                <p>📧 info@msl-school.com</p>
-                <p>📞 02-123-4567</p>
-                <p>📍 123 ถนนการศึกษา กรุงเทพฯ 10110</p>
-              </div>
-            </div>
+      {/* Features Section */}
+      <section className="py-24 px-6 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 transition-colors duration-300">
+              ทุกสิ่งที่คุณต้องการ
+            </h3>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors duration-300">
+              ฟีเจอร์ครบครันที่ตอบสนองความต้องการของโรงเรียนในยุคดิจิทัล
+            </p>
           </div>
 
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
-            <p>&copy; 2024 MSL School Management System. สงวนลิขสิทธิ์ทั้งหมด</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card
+                key={index}
+                className="border-0 shadow-sm hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800 group"
+              >
+                <CardHeader className="pb-4">
+                  <div
+                    className={`w-12 h-12 ${feature.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300`}
+                  >
+                    <feature.icon className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                    {feature.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-300">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 px-6">
+        <div className="container mx-auto text-center max-w-4xl">
+          <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 transition-colors duration-300">
+            พร้อมเริ่มต้นแล้วหรือยัง?
+          </h3>
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto transition-colors duration-300">
+            เข้าสู่ระบบด้วยบทบาทของคุณและสัมผัสประสบการณ์การจัดการโรงเรียนแบบใหม่
+          </p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            {[
+              {
+                role: "ผู้ดูแลระบบ",
+                desc: "จัดการระบบทั้งหมด",
+                color:
+                  "bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900",
+              },
+              {
+                role: "ครู",
+                desc: "จัดการชั้นเรียน",
+                color:
+                  "bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900",
+              },
+              {
+                role: "นักเรียน",
+                desc: "เข้าถึงข้อมูลการเรียน",
+                color:
+                  "bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900 text-green-600 dark:text-green-400 border-green-100 dark:border-green-900",
+              },
+              {
+                role: "ผู้ปกครอง",
+                desc: "ติดตามผลการเรียน",
+                color:
+                  "bg-purple-50 hover:bg-purple-100 dark:bg-purple-950 dark:hover:bg-purple-900 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900",
+              },
+            ].map((item, index) => (
+              <Link key={index} href="/login">
+                <div
+                  className={`p-6 rounded-2xl transition-all duration-300 cursor-pointer group border ${item.color}`}
+                >
+                  <h4 className="font-semibold mb-2">{item.role}</h4>
+                  <p className="text-sm opacity-80">{item.desc}</p>
+                  <ArrowRight className="w-4 h-4 mt-3 group-hover:translate-x-1 transition-transform duration-300" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-100 dark:border-gray-800 py-12 px-6 transition-colors duration-300">
+        <div className="container mx-auto text-center">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-lg flex items-center justify-center transition-colors duration-300">
+              <GraduationCap className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+              MSL School
+            </span>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 text-sm transition-colors duration-300">
+            © 2024 MSL School Management System. Made with ❤️ for Education
+          </p>
         </div>
       </footer>
     </div>

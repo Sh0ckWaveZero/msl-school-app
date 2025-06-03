@@ -1,44 +1,35 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useEffect } from "react"
+import { createContext, useContext, useEffect, type ReactNode } from "react"
 import { useAuthStore } from "@/lib/stores/auth-store"
 
 interface AuthContextType {
-  // Re-export store methods for backward compatibility
-  user: ReturnType<typeof useAuthStore>["user"]
-  login: ReturnType<typeof useAuthStore>["login"]
-  logout: ReturnType<typeof useAuthStore>["logout"]
-  isLoading: ReturnType<typeof useAuthStore>["isLoading"]
-  isAuthenticated: ReturnType<typeof useAuthStore>["isAuthenticated"]
+  user: any
+  isAuthenticated: boolean
+  isLoading: boolean
+  login: (username: string, password: string, role: string) => Promise<void>
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const authStore = useAuthStore()
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated, isLoading, login, logout, setLoading } = useAuthStore()
 
   useEffect(() => {
-    // Initialize auth state on mount
-    const initAuth = async () => {
-      // Check if user is already logged in from persisted state
-      if (authStore.user && !authStore.isAuthenticated) {
-        authStore.setUser(authStore.user)
-      }
-    }
+    // Initialize auth state
+    setLoading(false)
+  }, [setLoading])
 
-    initAuth()
-  }, [authStore])
-
-  const contextValue: AuthContextType = {
-    user: authStore.user,
-    login: authStore.login,
-    logout: authStore.logout,
-    isLoading: authStore.isLoading,
-    isAuthenticated: authStore.isAuthenticated,
+  const value = {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    logout,
   }
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
@@ -48,6 +39,3 @@ export function useAuth() {
   }
   return context
 }
-
-// Direct hook to Zustand store (recommended for new code)
-export { useAuthStore }

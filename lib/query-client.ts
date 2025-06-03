@@ -3,29 +3,54 @@ import { QueryClient } from "@tanstack/react-query"
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Mobile optimizations
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime)
+      // เพิ่มเวลา stale สำหรับ mobile เพื่อลด network requests
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes (เปลี่ยนจาก cacheTime เป็น gcTime ใน v5)
       retry: (failureCount, error: any) => {
-        // Don't retry on 4xx errors
+        // ไม่ retry สำหรับ 4xx errors
         if (error?.status >= 400 && error?.status < 500) {
           return false
         }
-        // Retry up to 2 times for other errors
-        return failureCount < 2
+        return failureCount < 3
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      // Network mode for mobile
+      // เพิ่ม network mode สำหรับ offline support
       networkMode: "offlineFirst",
-      // Refetch on window focus (good for mobile app switching)
-      refetchOnWindowFocus: true,
-      // Don't refetch on reconnect immediately (mobile data saving)
-      refetchOnReconnect: "always",
+      // ปิด refetch เมื่อ window focus บน mobile เพื่อประหยัด battery
+      refetchOnWindowFocus: false,
+      // เปิด background refetch สำหรับข้อมูลที่สำคัญ
+      refetchOnReconnect: true,
+      // ปรับ refetch interval สำหรับ mobile
+      refetchInterval: false,
     },
     mutations: {
-      // Mobile optimizations for mutations
-      retry: 1,
+      // เพิ่ม network mode สำหรับ mutations
       networkMode: "offlineFirst",
+      retry: (failureCount, error: any) => {
+        if (error?.status >= 400 && error?.status < 500) {
+          return false
+        }
+        return failureCount < 2
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
   },
+})
+
+// เพิ่ม global error handler
+queryClient.setMutationDefaults(["students", "create"], {
+  mutationFn: async (data: any) => {
+    const response = await fetch("/api/students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) throw new Error("Failed to create student")
+    return response.json()
+  },
+})
+
+// เพิ่ม query defaults สำหรับ students
+queryClient.setQueryDefaults(["students"], {
+  staleTime: 1000 * 60 * 2, // 2 minutes สำหรับข้อมูลที่เปลี่ยนแปลงบ่อย
 })

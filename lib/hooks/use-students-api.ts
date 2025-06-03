@@ -1,128 +1,134 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useStudentsStore, type Student } from "@/lib/stores/students-store"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useUIStore } from "@/lib/stores/ui-store"
 
-// Mock API functions
-const studentsApi = {
-  getStudents: async (): Promise<Student[]> => {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+export interface Student {
+  id: string
+  studentId: string
+  name: string
+  email: string
+  phone: string
+  grade: string
+  class: string
+  status: "active" | "inactive" | "graduated"
+  avatar?: string
+  parentName?: string
+  parentPhone?: string
+  address?: string
+  birthDate?: string
+  enrollmentDate: string
+}
 
-    // Get from store (in real app, this would be an API call)
-    return useStudentsStore.getState().students
+// Mock data
+const mockStudents: Student[] = [
+  {
+    id: "1",
+    studentId: "STD001",
+    name: "สมชาย ใจดี",
+    email: "somchai@student.msl.ac.th",
+    phone: "081-234-5678",
+    grade: "ม.1",
+    class: "1/1",
+    status: "active",
+    parentName: "นายสมศักดิ์ ใจดี",
+    parentPhone: "081-234-5679",
+    enrollmentDate: "2024-01-15",
+  },
+  {
+    id: "2",
+    studentId: "STD002",
+    name: "สมหญิง รักเรียน",
+    email: "somying@student.msl.ac.th",
+    phone: "082-345-6789",
+    grade: "ม.2",
+    class: "2/1",
+    status: "active",
+    parentName: "นางสมใจ รักเรียน",
+    parentPhone: "082-345-6790",
+    enrollmentDate: "2023-01-15",
+  },
+]
+
+// API functions
+const studentsApi = {
+  getAll: async (): Promise<Student[]> => {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    return mockStudents
   },
 
-  getStudent: async (id: string): Promise<Student> => {
+  getById: async (id: string): Promise<Student> => {
     await new Promise((resolve) => setTimeout(resolve, 500))
-
-    const students = useStudentsStore.getState().students
-    const student = students.find((s) => s.id === id)
-    if (!student) {
-      throw new Error("Student not found")
-    }
+    const student = mockStudents.find((s) => s.id === id)
+    if (!student) throw new Error("Student not found")
     return student
   },
 
-  createStudent: async (studentData: Omit<Student, "id">): Promise<Student> => {
+  create: async (data: Omit<Student, "id" | "enrollmentDate">): Promise<Student> => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
-
     const newStudent: Student = {
-      ...studentData,
-      id: Date.now().toString(),
+      ...data,
+      id: Math.random().toString(36).substr(2, 9),
+      enrollmentDate: new Date().toISOString().split("T")[0],
     }
-
-    // Update store
-    useStudentsStore.getState().addStudent(studentData)
+    mockStudents.push(newStudent)
     return newStudent
   },
 
-  updateStudent: async (id: string, updates: Partial<Student>): Promise<Student> => {
+  update: async (id: string, data: Partial<Student>): Promise<Student> => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
+    const index = mockStudents.findIndex((s) => s.id === id)
+    if (index === -1) throw new Error("Student not found")
 
-    const students = useStudentsStore.getState().students
-    const student = students.find((s) => s.id === id)
-    if (!student) {
-      throw new Error("Student not found")
-    }
-
-    const updatedStudent = { ...student, ...updates }
-    useStudentsStore.getState().updateStudent(id, updates)
-    return updatedStudent
+    mockStudents[index] = { ...mockStudents[index], ...data }
+    return mockStudents[index]
   },
 
-  deleteStudent: async (id: string): Promise<void> => {
+  delete: async (id: string): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 500))
-
-    useStudentsStore.getState().deleteStudent(id)
+    const index = mockStudents.findIndex((s) => s.id === id)
+    if (index === -1) throw new Error("Student not found")
+    mockStudents.splice(index, 1)
   },
 }
 
-// Query keys
-export const studentsKeys = {
-  all: ["students"] as const,
-  lists: () => [...studentsKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) => [...studentsKeys.lists(), filters] as const,
-  details: () => [...studentsKeys.all, "detail"] as const,
-  detail: (id: string) => [...studentsKeys.details(), id] as const,
-}
-
-// Hooks
+// Query hooks
 export function useStudents() {
-  const { searchTerm, selectedClass } = useStudentsStore()
-
   return useQuery({
-    queryKey: studentsKeys.list({ searchTerm, selectedClass }),
-    queryFn: studentsApi.getStudents,
-    // Mobile optimizations
-    staleTime: 2 * 60 * 1000, // 2 minutes for list data
-    select: (data) => {
-      // Filter data based on store state
-      return data.filter((student) => {
-        const matchesSearch =
-          student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.studentId.includes(searchTerm)
-        const matchesClass = selectedClass ? student.classroom === selectedClass : true
-        return matchesSearch && matchesClass
-      })
-    },
+    queryKey: ["students"],
+    queryFn: studentsApi.getAll,
+    staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
 
 export function useStudent(id: string) {
   return useQuery({
-    queryKey: studentsKeys.detail(id),
-    queryFn: () => studentsApi.getStudent(id),
+    queryKey: ["students", id],
+    queryFn: () => studentsApi.getById(id),
     enabled: !!id,
-    staleTime: 5 * 60 * 1000, // 5 minutes for detail data
   })
 }
 
+// Mutation hooks
 export function useCreateStudent() {
   const queryClient = useQueryClient()
   const addNotification = useUIStore((state) => state.addNotification)
 
   return useMutation({
-    mutationFn: studentsApi.createStudent,
+    mutationFn: studentsApi.create,
     onSuccess: (newStudent) => {
-      // Invalidate and refetch students list
-      queryClient.invalidateQueries({ queryKey: studentsKeys.lists() })
+      // Optimistic update
+      queryClient.setQueryData(["students"], (old: Student[] = []) => [...old, newStudent])
 
-      // Add to cache optimistically
-      queryClient.setQueryData(studentsKeys.detail(newStudent.id), newStudent)
-
-      // Show success notification
       addNotification({
-        title: "เพิ่มนักเรียนสำเร็จ",
-        message: `เพิ่มนักเรียน ${newStudent.firstName} ${newStudent.lastName} เรียบร้อยแล้ว`,
         type: "success",
+        title: "เพิ่มนักเรียนสำเร็จ",
+        message: `เพิ่ม ${newStudent.name} เรียบร้อยแล้ว`,
       })
     },
-    onError: (error: any) => {
+    onError: (error) => {
       addNotification({
-        title: "เกิดข้อผิดพลาด",
-        message: error.message || "ไม่สามารถเพิ่มนักเรียนได้",
         type: "error",
+        title: "เกิดข้อผิดพลาด",
+        message: error instanceof Error ? error.message : "ไม่สามารถเพิ่มนักเรียนได้",
       })
     },
   })
@@ -133,23 +139,26 @@ export function useUpdateStudent() {
   const addNotification = useUIStore((state) => state.addNotification)
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Student> }) => studentsApi.updateStudent(id, updates),
+    mutationFn: ({ id, data }: { id: string; data: Partial<Student> }) => studentsApi.update(id, data),
     onSuccess: (updatedStudent) => {
       // Update cache
-      queryClient.setQueryData(studentsKeys.detail(updatedStudent.id), updatedStudent)
-      queryClient.invalidateQueries({ queryKey: studentsKeys.lists() })
+      queryClient.setQueryData(["students"], (old: Student[] = []) =>
+        old.map((student) => (student.id === updatedStudent.id ? updatedStudent : student)),
+      )
+
+      queryClient.setQueryData(["students", updatedStudent.id], updatedStudent)
 
       addNotification({
-        title: "อัปเดตข้อมูลสำเร็จ",
-        message: `อัปเดตข้อมูลนักเรียน ${updatedStudent.firstName} ${updatedStudent.lastName} เรียบร้อยแล้ว`,
         type: "success",
+        title: "อัปเดตข้อมูลสำเร็จ",
+        message: `อัปเดตข้อมูล ${updatedStudent.name} เรียบร้อยแล้ว`,
       })
     },
-    onError: (error: any) => {
+    onError: (error) => {
       addNotification({
-        title: "เกิดข้อผิดพลาด",
-        message: error.message || "ไม่สามารถอัปเดตข้อมูลได้",
         type: "error",
+        title: "เกิดข้อผิดพลาด",
+        message: error instanceof Error ? error.message : "ไม่สามารถอัปเดตข้อมูลได้",
       })
     },
   })
@@ -160,40 +169,25 @@ export function useDeleteStudent() {
   const addNotification = useUIStore((state) => state.addNotification)
 
   return useMutation({
-    mutationFn: studentsApi.deleteStudent,
+    mutationFn: studentsApi.delete,
     onSuccess: (_, deletedId) => {
       // Remove from cache
-      queryClient.removeQueries({ queryKey: studentsKeys.detail(deletedId) })
-      queryClient.invalidateQueries({ queryKey: studentsKeys.lists() })
+      queryClient.setQueryData(["students"], (old: Student[] = []) => old.filter((student) => student.id !== deletedId))
+
+      queryClient.removeQueries({ queryKey: ["students", deletedId] })
 
       addNotification({
+        type: "success",
         title: "ลบนักเรียนสำเร็จ",
         message: "ลบข้อมูลนักเรียนเรียบร้อยแล้ว",
-        type: "success",
       })
     },
-    onError: (error: any) => {
+    onError: (error) => {
       addNotification({
-        title: "เกิดข้อผิดพลาด",
-        message: error.message || "ไม่สามารถลบนักเรียนได้",
         type: "error",
+        title: "เกิดข้อผิดพลาด",
+        message: error instanceof Error ? error.message : "ไม่สามารถลบนักเรียนได้",
       })
     },
   })
-}
-
-// Mobile-specific hook for offline support
-export function useStudentsOffline() {
-  const { data: students, isLoading, error } = useStudents()
-  const { searchTerm, selectedClass } = useStudentsStore()
-
-  // Fallback to store data when offline
-  const fallbackStudents = useStudentsStore((state) => state.filteredStudents)
-
-  return {
-    students: students || fallbackStudents,
-    isLoading,
-    error,
-    isOffline: !students && fallbackStudents.length > 0,
-  }
 }

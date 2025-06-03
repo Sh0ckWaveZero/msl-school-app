@@ -1,71 +1,29 @@
 "use client"
 
-import type React from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
-import { useState, useEffect } from "react"
+import { useState, type ReactNode } from "react"
 import { queryClient } from "@/lib/query-client"
 
-export function QueryProvider({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
+interface QueryProviderProps {
+  children: ReactNode
+}
 
-  useEffect(() => {
-    setMounted(true)
-
-    // Mobile-specific optimizations
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        // Refetch critical data when app becomes visible
-        queryClient.refetchQueries({
-          type: "active",
-          stale: true,
-        })
-      }
-    }
-
-    const handleOnline = () => {
-      // Refetch all queries when coming back online
-      queryClient.refetchQueries()
-    }
-
-    const handleOffline = () => {
-      // Pause queries when offline
-      queryClient
-        .getQueryCache()
-        .getAll()
-        .forEach((query) => {
-          query.setState((old) => ({
-            ...old,
-            fetchStatus: "idle",
-          }))
-        })
-    }
-
-    // Add event listeners for mobile optimization
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
-      window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
-    }
-  }, [])
-
-  if (!mounted) {
-    return null
-  }
+export function QueryProvider({ children }: QueryProviderProps) {
+  // ใช้ singleton pattern สำหรับ QueryClient
+  const [client] = useState(() => queryClient)
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       {children}
-      <ReactQueryDevtools
-        initialIsOpen={false}
-        position="bottom-right"
-        // Hide devtools on mobile
-        buttonPosition="bottom-right"
-      />
+      {process.env.NODE_ENV === "development" && (
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          position="bottom-right"
+          // เพิ่ม mobile-friendly devtools
+          buttonPosition="bottom-right"
+        />
+      )}
     </QueryClientProvider>
   )
 }
