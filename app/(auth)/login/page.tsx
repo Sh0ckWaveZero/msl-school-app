@@ -1,98 +1,74 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { GraduationCap, Eye, EyeOff, Loader2 } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/components/auth-provider"
 import { useToast } from "@/hooks/use-toast"
-
-const loginSchema = z.object({
-  username: z.string().min(1, "กรุณากรอกชื่อผู้ใช้").min(3, "ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร"),
-  password: z.string().min(1, "กรุณากรอกรหัสผ่าน").min(6, "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"),
-  role: z.string().min(1, "กรุณาเลือกบทบาท"),
-})
-
-type LoginFormData = z.infer<typeof loginSchema>
+import { GraduationCap, Eye, EyeOff, Loader2 } from "lucide-react"
 
 export default function LoginPage() {
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [role, setRole] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      role: "",
-    },
-  })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  const watchedRole = watch("role")
+    if (!username || !password || !role) {
+      toast({
+        title: "ข้อมูลไม่ครบถ้วน",
+        description: "กรุณากรอกข้อมูลให้ครบถ้วน",
+        variant: "destructive",
+      })
+      return
+    }
 
-  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await login(username, password, role)
+      toast({
+        title: "เข้าสู่ระบบสำเร็จ! 🎉",
+        description: `ยินดีต้อนรับ ${username}`,
+      })
 
-      // Mock validation
-      if (data.username === "admin" && data.password === "123456") {
-        toast({
-          title: "เข้าสู่ระบบสำเร็จ! 🎉",
-          description: `ยินดีต้อนรับ ${data.username}`,
-        })
-
-        // Redirect based on role
-        setTimeout(() => {
-          switch (data.role) {
-            case "admin":
-              router.push("/dashboard/admin")
-              break
-            case "teacher":
-              router.push("/dashboard/teacher")
-              break
-            case "student":
-              router.push("/dashboard/student")
-              break
-            case "parent":
-              router.push("/dashboard/parent")
-              break
-            default:
-              router.push("/dashboard")
-          }
-        }, 1000)
-      } else {
-        toast({
-          title: "เข้าสู่ระบบไม่สำเร็จ ❌",
-          description: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
-          variant: "destructive",
-        })
-      }
+      // Redirect based on role
+      setTimeout(() => {
+        router.push(`/dashboard/${role}`)
+      }, 1000)
     } catch (error) {
       toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
+        title: "เข้าสู่ระบบล้มเหลว ❌",
+        description: "กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const demoAccounts = [
+    { role: "admin", username: "admin", label: "ผู้ดูแลระบบ", color: "bg-red-500" },
+    { role: "teacher", username: "teacher", label: "ครู", color: "bg-blue-500" },
+    { role: "student", username: "student", label: "นักเรียน", color: "bg-green-500" },
+    { role: "parent", username: "parent", label: "ผู้ปกครอง", color: "bg-purple-500" },
+  ]
+
+  const fillDemoAccount = (demoRole: string, demoUsername: string) => {
+    setRole(demoRole)
+    setUsername(demoUsername)
+    setPassword(demoUsername) // Same as username for demo
   }
 
   return (
@@ -109,24 +85,43 @@ export default function LoginPage() {
               เข้าสู่ระบบ
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300 text-base mt-2">
-              กรุณาเข้าสู่ระบบเพื่อใช้งาน MSL School Management System
+              MSL School Management System
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="role" className="text-gray-700 dark:text-gray-300 font-medium">
+                  บทบาท
+                </Label>
+                <Select value={role} onValueChange={setRole} disabled={isLoading}>
+                  <SelectTrigger className="h-12 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                    <SelectValue placeholder="เลือกบทบาทของคุณ" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">ผู้ดูแลระบบ (Admin)</SelectItem>
+                    <SelectItem value="teacher">ครู (Teacher)</SelectItem>
+                    <SelectItem value="student">นักเรียน (Student)</SelectItem>
+                    <SelectItem value="parent">ผู้ปกครอง (Parent)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-gray-700 dark:text-gray-300 font-medium">
                   ชื่อผู้ใช้
                 </Label>
                 <Input
                   id="username"
-                  {...register("username")}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   placeholder="กรุณากรอกชื่อผู้ใช้"
                   className="h-12 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   disabled={isLoading}
+                  required
                 />
-                {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
               </div>
 
               <div className="space-y-2">
@@ -136,11 +131,13 @@ export default function LoginPage() {
                 <div className="relative">
                   <Input
                     id="password"
-                    {...register("password")}
                     type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="กรุณากรอกรหัสผ่าน"
                     className="h-12 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 pr-12 dark:bg-gray-700 dark:text-white"
                     disabled={isLoading}
+                    required
                   />
                   <Button
                     type="button"
@@ -157,25 +154,6 @@ export default function LoginPage() {
                     )}
                   </Button>
                 </div>
-                {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-gray-700 dark:text-gray-300 font-medium">
-                  บทบาท
-                </Label>
-                <Select onValueChange={(value) => setValue("role", value)} value={watchedRole} disabled={isLoading}>
-                  <SelectTrigger className="h-12 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
-                    <SelectValue placeholder="เลือกบทบาทของคุณ" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">ผู้ดูแลระบบ (Admin)</SelectItem>
-                    <SelectItem value="teacher">ครู (Teacher)</SelectItem>
-                    <SelectItem value="student">นักเรียน (Student)</SelectItem>
-                    <SelectItem value="parent">ผู้ปกครอง (Parent)</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.role && <p className="text-red-500 text-sm">{errors.role.message}</p>}
               </div>
 
               <Button
@@ -194,32 +172,36 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="text-center space-y-4">
-              <Link
-                href="/forgot-password"
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium hover:underline transition-colors"
-              >
-                ลืมรหัสผ่าน?
-              </Link>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                ยังไม่มีบัญชี?{" "}
-                <Link
-                  href="/register"
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline transition-colors"
-                >
-                  สมัครสมาชิก
-                </Link>
+            {/* Demo Accounts */}
+            <div className="mt-6">
+              <div className="text-sm text-center text-gray-600 dark:text-gray-400 mb-4 font-medium">
+                บัญชีทดสอบ (คลิกเพื่อใช้งาน):
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {demoAccounts.map((account) => (
+                  <Button
+                    key={account.role}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fillDemoAccount(account.role, account.username)}
+                    className="text-xs h-10 border-2 hover:border-blue-300 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${account.color} mr-2`} />
+                    {account.label}
+                  </Button>
+                ))}
               </div>
             </div>
 
-            {/* Demo Credentials */}
+            {/* Demo Credentials Info */}
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">ข้อมูลสำหรับทดสอบ:</p>
-              <p className="text-xs text-blue-700 dark:text-blue-300">
-                <strong>ชื่อผู้ใช้:</strong> admin
-                <br />
-                <strong>รหัสผ่าน:</strong> 123456
-              </p>
+              <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                <p>
+                  <strong>Username/Password:</strong> admin/admin, teacher/teacher, student/student, parent/parent
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

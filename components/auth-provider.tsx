@@ -13,6 +13,13 @@ interface User {
     firstName: string
     lastName: string
     avatar?: string
+    studentId?: string
+    teacherId?: string
+    parentId?: string
+    class?: string
+    grade?: string
+    subjects?: string[]
+    children?: string[]
   }
 }
 
@@ -24,6 +31,61 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// Mock users for different roles
+const mockUsers: Record<string, User> = {
+  admin: {
+    id: "admin001",
+    username: "admin",
+    email: "admin@msl-school.com",
+    role: "admin",
+    profile: {
+      firstName: "ผู้ดูแล",
+      lastName: "ระบบ",
+      avatar: "ผ",
+    },
+  },
+  teacher: {
+    id: "teacher001",
+    username: "teacher",
+    email: "teacher@msl-school.com",
+    role: "teacher",
+    profile: {
+      firstName: "สมหญิง",
+      lastName: "ใจดี",
+      avatar: "ส",
+      teacherId: "T001",
+      subjects: ["คณิตศาสตร์พื้นฐาน", "สถิติและความน่าจะเป็น", "แคลคูลัส"],
+    },
+  },
+  student: {
+    id: "student001",
+    username: "student",
+    email: "student@msl-school.com",
+    role: "student",
+    profile: {
+      firstName: "สมชาย",
+      lastName: "ใจดี",
+      avatar: "ส",
+      studentId: "STD001",
+      class: "ปวช.2/1",
+      grade: "ปวช.2",
+    },
+  },
+  parent: {
+    id: "parent001",
+    username: "parent",
+    email: "parent@msl-school.com",
+    role: "parent",
+    profile: {
+      firstName: "สมศรี",
+      lastName: "ใจดี",
+      avatar: "ส",
+      parentId: "P001",
+      children: ["สมชาย ใจดี", "สมหญิง ใจดี"],
+    },
+  },
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -51,20 +113,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string, role: string) => {
     setIsLoading(true)
     try {
-      // TODO: Implement actual authentication API call
-      const mockUser: User = {
-        id: "1",
-        username,
-        email: `${username}@msl-school.com`,
-        role: role as User["role"],
-        profile: {
-          firstName: "ผู้ใช้",
-          lastName: "ทดสอบ",
-        },
+      // Mock authentication - in real app, this would be an API call
+      const mockUser = mockUsers[role.toLowerCase()]
+
+      if (!mockUser) {
+        throw new Error("ไม่พบผู้ใช้สำหรับบทบาทนี้")
       }
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       setUser(mockUser)
       localStorage.setItem("msl-school-user", JSON.stringify(mockUser))
+      localStorage.setItem("user-role", role.toLowerCase())
     } catch (error) {
       throw new Error("การเข้าสู่ระบบล้มเหลว")
     } finally {
@@ -75,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null)
     localStorage.removeItem("msl-school-user")
+    localStorage.removeItem("user-role")
   }
 
   return <AuthContext.Provider value={{ user, login, logout, isLoading }}>{children}</AuthContext.Provider>

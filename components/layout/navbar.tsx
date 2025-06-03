@@ -1,12 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Menu, Bell } from "lucide-react"
+import { Search, Bell, MessageSquare, Calendar, Settings, User, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Separator } from "@/components/ui/separator"
 
 interface NavbarProps {
   onMenuClick?: () => void
@@ -15,9 +24,53 @@ interface NavbarProps {
 export function Navbar({ onMenuClick }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
+  const notifications = [
+    {
+      id: 1,
+      title: "เกรดใหม่",
+      message: "คุณได้รับเกรดใหม่สำหรับวิชาคณิตศาสตร์",
+      time: "5 นาทีที่แล้ว",
+      unread: true,
+    },
+    {
+      id: 2,
+      title: "ประกาศใหม่",
+      message: "มีประกาศใหม่จากโรงเรียน เรื่องการปิดเทอม",
+      time: "1 ชั่วโมงที่แล้ว",
+      unread: true,
+    },
+    {
+      id: 3,
+      title: "งานที่มอบหมาย",
+      message: "มีงานใหม่ที่ต้องส่งภายใน 3 วัน",
+      time: "2 ชั่วโมงที่แล้ว",
+      unread: false,
+    },
+  ]
+
+  const messages = [
+    {
+      id: 1,
+      from: "ครูสมหญิง",
+      message: "ส่งข้อความถึงคุณเกี่ยวกับการบ้าน",
+      time: "10 นาทีที่แล้ว",
+      unread: true,
+    },
+    {
+      id: 2,
+      from: "ผู้ปกครอง",
+      message: "นัดหมายพบครูพรุ่งนี้",
+      time: "30 นาทีที่แล้ว",
+      unread: true,
+    },
+  ]
+
+  const unreadNotifications = notifications.filter((n) => n.unread).length
+  const unreadMessages = messages.filter((m) => m.unread).length
+
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6">
-      {/* Mobile menu button */}
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 shadow-sm">
+      {/* Left side - Mobile menu button and Search */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
           <Menu className="h-5 w-5" />
@@ -25,48 +78,146 @@ export function Navbar({ onMenuClick }: NavbarProps) {
 
         {/* Search */}
         <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="search"
             placeholder="ค้นหา..."
-            className="w-[300px] pl-10 bg-background border-input"
+            className="w-[300px] pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-4">
-        {/* Notifications */}
+      {/* Right side - Actions */}
+      <div className="flex items-center gap-2">
+        {/* Messages */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500 text-white">
-                3
-              </Badge>
+            <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <MessageSquare className="h-5 w-5" />
+              {unreadMessages > 0 && (
+                <Badge
+                  variant="destructive"
+                  size="notification"
+                  count={unreadMessages}
+                  className="absolute -top-1 -right-1"
+                />
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-80" align="end">
-            <div className="p-4">
-              <h4 className="font-medium text-foreground mb-2">การแจ้งเตือน</h4>
-              <div className="space-y-2">
-                <div className="p-2 rounded-lg bg-muted">
-                  <p className="text-sm font-medium">เกรดใหม่</p>
-                  <p className="text-xs text-muted-foreground">คุณได้รับเกรดใหม่สำหรับวิชาคณิตศาสตร์</p>
-                </div>
-                <div className="p-2 rounded-lg bg-muted">
-                  <p className="text-sm font-medium">ประกาศใหม่</p>
-                  <p className="text-xs text-muted-foreground">มีประกาศใหม่จากโรงเรียน</p>
-                </div>
-              </div>
+            <DropdownMenuLabel className="flex items-center justify-between">
+              ข้อความ
+              <Badge variant="secondary" size="sm">
+                {unreadMessages} ใหม่
+              </Badge>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="max-h-80 overflow-y-auto">
+              {messages.map((message) => (
+                <DropdownMenuItem key={message.id} className="flex flex-col items-start p-3">
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{message.from}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{message.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{message.time}</p>
+                    </div>
+                    {message.unread && <div className="h-2 w-2 bg-blue-500 rounded-full" />}
+                  </div>
+                </DropdownMenuItem>
+              ))}
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Theme Toggle */}
+        {/* Notifications */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <Bell className="h-5 w-5" />
+              {unreadNotifications > 0 && (
+                <Badge
+                  variant="destructive"
+                  size="notification"
+                  count={unreadNotifications}
+                  className="absolute -top-1 -right-1"
+                />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-80" align="end">
+            <DropdownMenuLabel className="flex items-center justify-between">
+              การแจ้งเตือน
+              <Badge variant="secondary" size="sm">
+                {unreadNotifications} ใหม่
+              </Badge>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="max-h-80 overflow-y-auto">
+              {notifications.map((notification) => (
+                <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3">
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{notification.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
+                    </div>
+                    {notification.unread && <div className="h-2 w-2 bg-blue-500 rounded-full" />}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Calendar */}
+        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <Calendar className="h-5 w-5" />
+        </Button>
+
+        {/* Theme Toggle - แบบเดิม */}
         <ThemeToggle />
+
+        {/* Settings */}
+        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <Settings className="h-5 w-5" />
+        </Button>
+
+        <Separator orientation="vertical" className="h-6 mx-2" />
+
+        {/* User Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">ผ</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">ผู้ดูแลระบบ</p>
+                <p className="text-xs leading-none text-muted-foreground">admin@mslschool.ac.th</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>โปรไฟล์</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>ตั้งค่า</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-red-600">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>ออกจากระบบ</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )
